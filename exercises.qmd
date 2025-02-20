@@ -4,23 +4,281 @@ format: html
 editor: visual
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
 ```{r}
-1 + 1
+install.packages("dplyr")
+library(dplyr)
 ```
 
-You can add options to executable code like this
+Question 1:
 
 ```{r}
-#| echo: false
-2 * 2
+glimpse(tree_dat)
+
+#The dataset is a table with 131,386 rows and 8 columns. Each row is new data about a tree while the columns are which tree, the year, the species, the age, and more.
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+Question 2:
+
+```{r}
+tree_dat %>%
+  filter(standID == 1) %>%
+  tally()
+
+tree_stand1 <- tree_dat %>%
+  filter(standID ==1)
+
+print(tree_stand1)
+
+#There has been 979 records made in stand 1.
+
+```
+
+Question 3:
+
+```{r}
+tree_dat %>%
+  filter(species %in% c("ABBA", "PIST")) %>%
+  count(species)
+
+#There have been 17221 records of Abies balsamea and Pinus strobus species made, with 13033 ABBA and 4188 PIST.
+
+```
+
+Question 4:
+
+```{r}
+last_year <- max(tree_dat$year, na.rm = TRUE)
+
+tree_dat %>%
+  filter(year == last_year, age > 200) %>%
+  tally()
+
+#There are 7 trees older than 200 years in the last year of the dataset.
+```
+
+Question 5:
+
+```{r}
+tree_dat %>%
+  slice_max(order_by = age, n = 1) #n=1 just returns top first row
+
+#The oldest tree in the dataset is treeID 24 at the age of 269.
+```
+
+Question 6:
+
+```{r}
+tree_dat %>%
+  filter(year == "2001") %>%
+  slice_max(order_by = age, n = 5)
+
+#The top five oldest trees in 2001 are treeID 24 at age 263, treeID 25 at 259, treeID 1595 at 212, treeID 1598 at 206, and treeID 1712 at 206.
+```
+
+Question 7:
+
+```{r}
+tree_dat %>%
+  filter(year == "2002") %>%
+  slice_sample(prop = 0.3) %>%
+  tally()
+
+#There are 687 trees in a 30% sample of trees from 2002.
+```
+
+Question 8:
+
+```{r}
+tree_dat %>%
+  filter(year == 2007, standID == 5) %>%
+  arrange(desc(rad_ib)) %>%
+  slice_head(n = 3)
+
+#The treeIDs are 128, 157, and 135
+```
+
+Question 9:
+
+```{r}
+tree_dat %>%
+  select("treeID", "standID", "year", "rad_ib") %>%
+  filter(standID == 3, year == 2007) %>%
+  slice_min(order_by = rad_ib, n = 3)
+
+#The treeIDs are 50 with a 47.396 radius, 56 with a 48.440 radius, and 36 with a 54.925 radius.
+```
+
+Question 10:
+
+```{r}
+tree_dat %>% 
+  select(-"stand") %>% 
+  glimpse()
+
+```
+
+Question 11:
+
+```{r}
+?dplyr::select
+
+tree_dat %>% 
+  select(contains("ID")) %>% 
+  glimpse()
+
+#I chose the contains() function because that way it can select any column that includes "ID" in it.
+```
+
+Question 12:
+
+```{r}
+tree_dat %>% 
+  select(contains("ID"), contains("stand")) %>% 
+  glimpse()
+
+#I chose the selection pattern with contains() and included both "ID" and "stand".
+```
+
+Question 13:
+
+```{r}
+tree_dat <- tree_dat %>% 
+  rename(rad_ib_mm = rad_ib) %>% 
+  rename(inc_mm = inc)
+
+glimpse(tree_dat)
+
+#Renamed column "rad_ib" to "rad_ib_m" and "inc" to "inc_mm"
+
+```
+
+Question 14:
+
+```{r}
+tree_dat <- tree_dat %>% 
+  mutate(DBH_cm = (rad_ib_mm/10)*2) %>% 
+  mutate(BA_m2 = 0.00007854*(DBH_cm)^2)
+#Create a column for DBH_cm and BA_m2
+
+tree_dat %>% 
+  filter(species == "POTR", year == 2007) %>% 
+  summarise(BA_m2 = mean(BA_m2))
+
+#The mean BA_m2 of the POTR species in 2007 was 0.03696619.
+```
+
+Question 15:
+
+```{r}
+tree_dat <- tree_dat %>% 
+  mutate(established = ifelse(age >5, "TRUE", "FALSE"))
+
+tree_dat %>% 
+  count(established)
+
+#There are 8883 records of "FALSE" and 122503 records of "TRUE".
+```
+
+Question 16:
+
+```{r}
+tree_dat <- 
+  tree_dat %>% 
+  mutate(DBH_class = case_when(
+  DBH_cm > 0 & DBH_cm < 2.5 ~ "seedling",
+  DBH_cm > 2.5 & DBH_cm < 10 ~ "sapling",
+  DBH_cm > 10 & DBH_cm < 30 ~ "pole",
+  DBH_cm > 30 ~ "sawlog"))
+#Create a column called "DBH_class"
+
+tree_dat %>% 
+  filter(year == 2007) %>% 
+  count(DBH_class)
+
+#In 2007 there were 1963 trees in the DBH class pole, 252 in sapling, and 76 in sawlog.
+```
+
+Question 17:
+
+```{r}
+tree_dat %>% 
+  filter(year == 2007) %>% 
+  summarise(
+    mean_DBH = mean(DBH_cm, na.rm = TRUE),
+    sd_DBH = sd(DBH_cm, na.rm = TRUE))
+
+#The mean DBH for all trees in 2007 was 16.09 cm; this means that the average diameter breast height across all tree data in that year was around 16 cm. The standard deviation of all tree DBH measurements in that same year was 6.14 cm. This indicates that the average different between tree diameter breast height was around 6 cm. 
+```
+
+Question 18:
+
+```{r}
+tree_dat %>% 
+  filter(year == 2003) %>% 
+  group_by(species) %>% 
+  summarise(mean_age = mean(age, na.rm = TRUE)) %>% 
+  arrange(desc(mean_age)) %>% 
+  slice_head(n=3)
+
+#The three oldest species are Thuja occidentalis (THOC), Fraxinus nigra (FRNI), and Pinus strobus (PIST).
+```
+
+Question 19:
+
+```{r}
+tree_dat %>%
+  summarise(
+    unique_years = n_distinct(year),
+    first_year = min(year, na.rm = TRUE),
+    last_year = max(year, na.rm = TRUE))
+
+#There are 111 unique years within the dataset with the first year in 1897 and the last one in 2007.
+```
+
+Question 20:
+
+```{r}
+tree_dat %>% 
+  group_by(stand) %>% 
+  summarise(unique_years = n_distinct(year)) %>% 
+  filter(unique_years == max(unique_years))
+
+#The stands with the largest number of unique years are A1, D1, D2, D3, and F1.
+
+```
+
+Final Question:
+
+```{r}
+?lag()
+?diff()
+
+tree_dat %>%
+  group_by(species) %>%
+  mutate(annual_growth = DBH_cm - lag(DBH_cm)) %>%
+  filter(!is.na(annual_growth)) %>%
+  summarise(total_years = n(), mean_growth = mean(annual_growth, na.rm = TRUE)) %>%
+  filter(total_years >= 10) %>% 
+  group_by(species) %>%
+  summarise(species_mean_growth = mean(mean_growth, na.rm = TRUE),species_sd_growth = sd(mean_growth, na.rm = TRUE)) %>%
+  arrange(desc(species_mean_growth)) -> species_growth_data
+
+#Make a new data frame of the growth rate for each tree species.
+
+top_3_species <- species_growth_data %>% 
+  slice_head(n = 3)
+
+#The 3 species with the fastest growth are Larix laricina (LALA), Populus grandidentata (POGR), and Thuja occidentalis (THOC).
+
+bottom_3_species <- species_growth_data %>% 
+  slice_tail(n = 3)
+
+#The 3 species with the slowest growth are Populus tremuloides (POTR), Pinus strobus (PIST), and Pinus resinosa (PIRE). 
+
+```
+
+Image of fastest growing tree:
+
+![](images/LALA-tree.jpeg){width="357"}
+
+Caption: Image of a Larix laricina. Source: Orleans Conservation Trust.
