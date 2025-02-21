@@ -1,5 +1,5 @@
 ---
-title: "Exercises"
+title: "Lab 2 Exercises"
 format: html
 editor: visual
 ---
